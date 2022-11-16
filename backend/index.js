@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 const movieCache = new nodeCache({ stdTTL: 30 });
 const app = express();
 const port = 3000;
-// var movieUrl = `https://www.omdbapi.com/?s=star&apikey=33f48a0c`;
+// var movieUrl = `https://www.omdbapi.com/?s=star&apikey=`;
 dotenv.config();
 
 console.log(process.env.API_KEY);
@@ -31,6 +31,15 @@ app.get("/api/search/:keyword", (req, res) => {
     }
 
 })
+
+app.get("/api/clear",(req,res)=>{
+    movieCache.flushAll();
+    res.send(movieCache.getStats())
+})
+
+// app.get("/stats",(req,res)=>{
+//     res.send(movieCache.getStats())
+// })
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
