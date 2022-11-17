@@ -2,44 +2,41 @@ import express from "express";
 import fetch from "node-fetch";
 import nodeCache from "node-cache";
 import dotenv from "dotenv";
+import cors from "cors";
 
 const movieCache = new nodeCache({ stdTTL: 30 });
 const app = express();
 const port = 3000;
-// var movieUrl = `https://www.omdbapi.com/?s=star&apikey=`;
 dotenv.config();
+app.use(cors());
 
-console.log(process.env.API_KEY);
-
-///api/search?keyword=foo
 app.get("/api/search/:keyword", (req, res) => {
     var movieUrl = `https://www.omdbapi.com/?s=${req.params.keyword}&apikey=${process.env.API_KEY}`;
-    if (movieCache.has("movie")) {
+    if (movieCache.has(`${req.params.keyword}`)) {
         console.log("Getting from cache");
         console.log(movieUrl);
         console.log(req.params.keyword);
-        return res.send(movieCache.get("movie"));
+        return res.send(movieCache.get(`${req.params.keyword}`));
 
     } else {
-        fetch(movieUrl)
-            .then((response) => response.json())
-            .then((json) => {
-                movieCache.set("movie", json);
-                console.log("Getting from api");
-                res.send(json);
-            })
+        try {
+            fetch(movieUrl)
+                .then((response) => response.json())
+                .then((json) => {
+                    movieCache.set(`${req.params.keyword}`, json);
+                    console.log("Getting from api");
+                    res.send(json);
+                })
+        } catch (error) {
+            res.send.status(404);
+            console.log(error);
+        }
     }
-
 })
 
-app.get("/api/clear",(req,res)=>{
+app.get("/api/clear", (req, res) => {
     movieCache.flushAll();
-    res.send(movieCache.getStats())
 })
-
-// app.get("/stats",(req,res)=>{
-//     res.send(movieCache.getStats())
-// })
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
